@@ -1,6 +1,24 @@
 {
-  "name": "typescript",
-  "version": "0.0.0",
+  "name": "quote_of_the_day",
+  "version": "0.0.1",
   "private": true,
-  "dependencies": {}
+  "main": "index.ts",
+  "scripts": {
+    "test": "cucumber-js -p default",
+    "test:unit": "mocha -w --extension ts -r ts-node/register -r tsconfig-paths/register tests/unit/**/*.test.ts"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/chai": "^4.2.7",
+    "@types/cucumber": "^6.0.0",
+    "@types/mocha": "^5.2.7",
+    "chai": "^4.2.0",
+    "cucumber": "^6.0.5",
+    "cucumber-pretty": "^6.0.0",
+    "cucumber-tsflow": "^3.2.0",
+    "mocha": "^6.2.2",
+    "ts-node": "^8.5.4",
+    "tsconfig-paths": "^3.9.0",
+    "typescript": "^3.7.4"
+  }
 }

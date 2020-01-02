@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "experimentalDecorators": true,
+    "alwaysStrict": false,
+    "moduleResolution": "Node",
+    "types": ["cucumber", "chai", "mocha"],
+    "target": "ES6",
+    "baseUrl": "./src",
+    "paths": {
+      "@domain/*": ["domain/*"],
+      "@adapters": ["adapters"],
+      "@usecases": ["usecases"],
+      "@app/*": ["app/*"],
+      "@test/*": ["../tests/*"]
+    }
+  },
+  "exclude": ["node_modules"]
+}
