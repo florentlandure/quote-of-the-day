@@ -1,31 +1,19 @@
-import { IMessageRepository } from '@domain/repositories';
-import { InMemoryMessageRepository } from '@adapters';
-import { Quote, Message } from '@domain/models';
+import { Message, Quote } from '@domain/models';
+import { IMessageRepository, IQuoteRepository } from '@domain/repositories';
+import { RepositoriesFactory } from '@factories';
 import { CreateMessage } from '@usecases';
 import { assert } from 'chai';
 
 describe('Create message usecase', () => {
   let messageRepository: IMessageRepository;
   let createMessage: CreateMessage;
+  let quoteRepository: IQuoteRepository;
   let quote: Quote;
 
-  beforeEach(() => {
-    messageRepository = new InMemoryMessageRepository();
-    createMessage = new CreateMessage(messageRepository);
-    quote = new Quote(
-      'W5EcObayalp77mj4P2T28AeF',
-      'Do not let what you cannot do interfere with what you can do.',
-      'John Wooden',
-      ['inspire', 'ability'],
-      'theysaidso.com'
-    );
-  });
-
-  it('should create a message from a quote', async () => {
-    createMessage.handle(quote);
-    const messages: Message[] = await messageRepository.getAll();
-    const message = messages[0];
+  const assertMessageHasBeenShared = (messages: Message[]) => {
     assert.equal(messages.length, 1);
+  };
+  const assertSharedMessageIsValid = (quote: Quote, message: Message) => {
     assert.equal(
       message.body,
       new Message(
@@ -36,5 +24,20 @@ describe('Create message usecase', () => {
         quote.provider
       ).body
     );
+  };
+
+  beforeEach(async () => {
+    messageRepository = RepositoriesFactory.createMessageRepository();
+    createMessage = new CreateMessage(messageRepository);
+    quoteRepository = RepositoriesFactory.createQuoteRepository();
+    quote = await quoteRepository.getTodayQuote();
+  });
+
+  it('should create a message from a quote', async () => {
+    createMessage.handle(quote);
+    const messages: Message[] = await messageRepository.getAll();
+    const message = messages[0];
+    assertMessageHasBeenShared(messages);
+    assertSharedMessageIsValid(quote, message);
   });
 });

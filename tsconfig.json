@@ -1,19 +1,22 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
+    "module": "CommonJS",
     "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "alwaysStrict": false,
     "moduleResolution": "Node",
-    "types": ["cucumber", "chai", "mocha"],
+    "types": ["cucumber", "chai", "mocha", "node"],
     "target": "ES6",
     "baseUrl": "./src",
     "paths": {
       "@domain/*": ["domain/*"],
       "@adapters": ["adapters"],
       "@usecases": ["usecases"],
+      "@factories": ["factories"],
       "@app/*": ["app/*"],
       "@test/*": ["../tests/*"]
-    }
+    },
+    "outDir": "./build"
   },
   "exclude": ["node_modules"]
 }
