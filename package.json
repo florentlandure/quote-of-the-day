@@ -7,7 +7,9 @@
     "test": "cucumber-js -p default",
     "test:unit": "mocha -w --extension ts -r ts-node/register -r tsconfig-paths/register tests/unit/**/*.test.ts"
   },
-  "dependencies": {},
+  "dependencies": {
+    "axios": "^0.19.0"
+  },
   "devDependencies": {
     "@types/chai": "^4.2.7",
     "@types/cucumber": "^6.0.0",
