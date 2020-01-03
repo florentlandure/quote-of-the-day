@@ -1,6 +1,6 @@
 import { IMessageRepository, IQuoteRepository } from '@domain/repositories';
 import { RepositoriesFactory } from '@factories';
-import { CreateMessage, GetQuoteOfTheDay } from '@usecases';
+import { ShareQuote, GetQuoteOfTheDay } from '@usecases';
 import { Quote, Message } from '@domain/models';
 
 const quoteRepository: IQuoteRepository = RepositoriesFactory.createQuoteRepository();
@@ -9,8 +9,10 @@ const messageRepository: IMessageRepository = RepositoriesFactory.createMessageR
 class Main {
   private quote: Quote;
   private getQuoteOfTheDay: GetQuoteOfTheDay;
-  private createMessage: CreateMessage;
+  private shareQuote: ShareQuote;
   private intervalDurationMs: number = 1000 * 60 * 60;
+  private startHour: number = 8;
+  private endHour: number = 22;
 
   constructor(
     private quoteRepository: IQuoteRepository,
@@ -23,7 +25,12 @@ class Main {
 
   private init(): void {
     this.getQuoteOfTheDay = new GetQuoteOfTheDay(this.quoteRepository);
-    this.createMessage = new CreateMessage(this.messageRepository);
+    this.shareQuote = new ShareQuote(this.messageRepository);
+  }
+
+  private async run() {
+    await this.getQuote();
+    this.shareMessage();
   }
 
   private setLoop(): void {
@@ -32,26 +39,26 @@ class Main {
     }, this.intervalDurationMs);
   }
 
-  private async run() {
-    const hours = new Date().getHours();
-    await this.getQuote(hours);
-    this.shareMessage();
-  }
-
-  private async getQuote(hours: number) {
-    this.quote = await this.getQuoteOfTheDay.handle(hours);
+  private async getQuote() {
+    this.quote = await this.getQuoteOfTheDay.handle();
   }
 
   private async shareMessage(): Promise<void> {
-    if (this.quote) {
-      await this.createMessage.handle(this.quote);
-    }
+    try {
+      const hour: number = new Date().getHours();
+      await this.shareQuote.handle(
+        this.quote,
+        hour,
+        this.startHour,
+        this.endHour
+      );
+      const message: Message = await this.messageRepository.getTodayMessage();
 
-    const messages: Message[] = await this.messageRepository.getAll();
-    messages.forEach(message => {
       console.log('--------');
       console.log(message.body);
-    });
+    } catch (err) {
+      console.error(err);
+    }
   }
 }
 

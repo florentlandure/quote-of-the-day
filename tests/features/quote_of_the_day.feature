@@ -1,22 +1,36 @@
 Feature: Quote of the day
   Get the quote of the day and share it to the world
 
-  Scenario Outline: Get quote of the day
-    Given Time "<current_time>" is between 8am and 10am
+  Scenario Outline: Share the quote of the day
+    Given The time parameters "<current_hour>", "<start_hour>" and "<end_hour>"
+      And Time "<current_hour>" is between "<start_hour>" and "<end_hour>"
+      And I have not shared a quote today
     When I get the quote of the day
-    Then It should be available to me
+    Then It shares it to the world
 
     Examples:
-      | current_time     |
-      | 2019-01-12T09:00 |
-      | 2019-01-12T21:00 |
+      | start_hour | end_hour | current_hour |
+      | 8          | 22       | 9            |
+      | 8          | 22       | 21           |
 
-  Scenario: Share the quote of the day
-    Given I have the quote of the day
-    When It creates a message from the quote
-    Then It is shared to the world
+  Scenario Outline: Do not share the quote of the day during the night
+    Given The time parameters "<current_hour>", "<start_hour>" and "<end_hour>"
+      And Time "<current_hour>" is not between "<start_hour>" and "<end_hour>"
+    When I get the quote of the day
+    Then Do not share the quote of the day
 
-# Examples
-#      | id                       | content                                                                | author              | formatted_tags                   | provider       |
-#      | W5EcObayalp77mj4P2T28AeF | Do not let what you cannot do interfere with what you can do.          | John Wooden         | #quoteOfTheDay #inspire #ability | theysaidso.com |
-#      | DpEEVUKSlOEe3_PkAuAm_geF | Without art, the crudeness of reality would make the world unbearable. | George Bernard Shaw | #quoteOfTheDay #art #reality     | theysaidso.com |
+    Examples:
+      | start_hour | end_hour | current_hour |
+      | 8          | 22       | 4            |
+      | 8          | 22       | 23           |
+
+  Scenario Outline: Do not share the quote of the day twice
+    Given The time parameters "<current_hour>", "<start_hour>" and "<end_hour>"
+      And Time "<current_hour>" is between "<start_hour>" and "<end_hour>"
+      And I have shared a quote today
+    Then Do not share the quote of the day
+
+    Examples:
+      | start_hour | end_hour | current_hour |
+      | 8          | 22       | 9            |
+      | 8          | 22       | 21           |

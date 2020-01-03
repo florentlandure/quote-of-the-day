@@ -1,10 +1,10 @@
 {
   "compilerOptions": {
-    "module": "CommonJS",
+    "module": "commonjs",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "alwaysStrict": false,
-    "moduleResolution": "Node",
+    "moduleResolution": "node",
     "types": ["cucumber", "chai", "mocha", "node"],
     "target": "ES6",
     "baseUrl": "./src",
@@ -16,7 +16,8 @@
       "@app/*": ["app/*"],
       "@test/*": ["../tests/*"]
     },
-    "outDir": "./build"
+    "outDir": "./build",
+    "lib": ["ES2018"]
   },
   "exclude": ["node_modules"]
 }

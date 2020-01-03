@@ -4,8 +4,9 @@ import { IMessageRepository } from '@domain/repositories';
 import { IQuoteRepository } from '@domain/repositories/quote-repository.interface';
 import { assert } from 'chai';
 import { binding, given, then, when } from 'cucumber-tsflow';
-import { CreateMessage, GetQuoteOfTheDay } from 'usecases';
+import { ShareQuote, GetQuoteOfTheDay } from 'usecases';
 import { RepositoriesFactory } from '@factories';
+import * as moment from 'moment';
 
 @binding()
 export class QuoteOfTheDaySteps {
@@ -13,47 +14,93 @@ export class QuoteOfTheDaySteps {
   private quote: Quote;
   private messageRepository: IMessageRepository;
   private hour: number;
+  private startHour: number;
+  private endHour: number;
+  private isGoodTime: boolean;
+  private getQuoteOfTheDay: GetQuoteOfTheDay;
+  private shareQuote: ShareQuote;
 
   constructor() {
     this.quoteRepository = RepositoriesFactory.createQuoteRepository();
     this.messageRepository = RepositoriesFactory.createMessageRepository();
+    this.getQuoteOfTheDay = new GetQuoteOfTheDay(this.quoteRepository);
+    this.shareQuote = new ShareQuote(this.messageRepository);
   }
 
-  @given(/Time \"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2})\" is between 8am and 10am/)
-  async givenItIsTime(currentTime: string) {
-    this.hour = new Date(currentTime).getHours();
+  @given(/The time parameters \"(\d+)\", \"(\d+)\" and \"(\d+)\"/)
+  givenTimeParameters(currentHour: number, startHour: number, endHour: number) {
+    this.hour = currentHour;
+    this.startHour = startHour;
+    this.endHour = endHour;
+  }
+
+  @given(/Time \"(\d+)\" is between \"(\d+)\" and \"(\d+)\"/)
+  givenTimeIsBetween(currentHour: number, startHour: number, endHour: number) {
+    this.isGoodTime = currentHour >= startHour && currentHour <= endHour;
+  }
+
+  @given('I have not shared a quote today')
+  async givenIHaveNotSharedQuoteToday() {
+    const todayMessage = await this.messageRepository.getTodayMessage();
+    assert.isUndefined(todayMessage);
   }
 
   @when('I get the quote of the day')
-  async thenDispatchAction() {
-    this.quote = await new GetQuoteOfTheDay(this.quoteRepository).handle(
-      this.hour
-    );
+  async thenIGetQuoteOfTheDay() {
+    this.quote = await this.getQuoteOfTheDay.handle();
+    assert.isDefined(this.quote);
   }
 
-  @then('It should be available to me')
-  thenItShouldBeAvailable() {
-    if (this.hour >= 8 && this.hour <= 10) {
-      assert.isDefined(this.quote);
+  @then('It shares it to the world')
+  async thenSharesToTheWorld() {
+    await this.shareQuote.handle(
+      this.quote,
+      this.hour,
+      this.startHour,
+      this.endHour
+    );
+    const message: Message = await this.messageRepository.getTodayMessage();
+    assert.isDefined(message);
+    assert.include(message.body, this.quote.content);
+  }
+
+  @then('Do not share the quote of the day')
+  async thenDoNotShareQuoteOfTheDay() {
+    try {
+      await this.shareQuote.handle(
+        this.quote,
+        this.hour,
+        this.startHour,
+        this.endHour
+      );
+    } catch (err) {
+      assert.match(
+        err,
+        /(Quote already shared today)|(Cannot share quote at this hour)/
+      );
     }
   }
 
-  @given('I have the quote of the day')
-  async givenIHaveTheQuoteOfTheDay() {
-    this.quote = await this.quoteRepository.getTodayQuote();
-    assert.isDefined(this.quote.id);
-    assert.isDefined(this.quote.content);
+  @given(/Time \"(\d+)\" is not between \"(\d+)\" and \"(\d+)\"/)
+  givenTimeIsNotBetween(
+    currentHour: number,
+    startHour: number,
+    endHour: number
+  ) {
+    this.isGoodTime = currentHour < startHour || currentHour > endHour;
   }
 
-  @when('It creates a message from the quote')
-  whenGetQuoteOfTheDay() {
-    const createMessage = new CreateMessage(this.messageRepository);
-    createMessage.handle(this.quote);
-  }
-
-  @then('It is shared to the world')
-  async thenIsSharedToTheWorld() {
-    const messages: Message[] = await this.messageRepository.getAll();
-    assert.equal(messages.length, 1);
+  @given('I have shared a quote today')
+  async givenIHaveSharedQuoteToday() {
+    this.quote = await this.getQuoteOfTheDay.handle();
+    await this.shareQuote.handle(
+      this.quote,
+      this.hour,
+      this.startHour,
+      this.endHour
+    );
+    const todayMessage: Message = await this.messageRepository.getTodayMessage();
+    assert.isDefined(todayMessage);
+    assert.equal(moment().diff(todayMessage.date, 'days'), 0);
   }
 }
